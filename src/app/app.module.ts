@@ -7,6 +7,9 @@ import { ConfigModule } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { OtpModule } from 'src/otp/otp.module';
+import { AuthModule } from 'src/auth/auth.module';
+import { EventModule } from 'src/event/event.module';
 
 @Module({
   imports: [
@@ -18,7 +21,11 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'client'),
     }),
+
+    AuthModule,
+    OtpModule,
     UserModule,
+    EventModule,
   ],
   controllers: [AppController],
   providers: [AppService],

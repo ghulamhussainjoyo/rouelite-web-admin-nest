@@ -5,6 +5,7 @@ import {
   MaxLength,
   IsArray,
   IsEnum,
+  IsBoolean,
 } from 'class-validator';
 import { visibility } from 'src/types/user.enum';
 
@@ -63,13 +64,13 @@ export class CreateUserDto {
   readonly campus: string;
 
   @IsNotEmpty()
-  readonly enrollmentYear: Date;
+  readonly enrollmentYear: string;
 
   @IsArray()
   readonly interest: string[];
 
   @IsArray()
-  readonly friends: IFriendDto[];
+  readonly friends?: IFriendDto[];
 
   @IsArray()
   readonly requests: IRequestDto[];
@@ -77,30 +78,44 @@ export class CreateUserDto {
   @IsArray()
   readonly blocked: IBlockedDto[];
 
-  readonly image?: string | null;
+  readonly image?: IImage;
 
   @IsArray()
   readonly hosted: string[]; // Assuming string array for event IDs
 
   @IsArray()
-  readonly attended: string[]; // Assuming string array for event IDs
+  readonly attended?: string[]; // Assuming string array for event IDs
 
   @IsArray()
   readonly socials: ISocialDto[];
 
   @IsEnum(visibility)
   @IsNotEmpty()
-  readonly accountVisibility: visibility;
+  readonly accountVisibility?: visibility;
 
   @IsArray()
-  readonly notification: string[]; // Assuming string array for notification IDs
+  readonly notification?: string[]; // Assuming string array for notification IDs
+
+  @IsBoolean()
+  readonly isProfileCompleted: boolean;
 }
 
 export class CreateUserPartialDto {
+  // constructor(object: any) {
+  //   if (object) {
+  //     this.campus = object.campus;
+  //     this.email = object.email;
+  //     this.enrollmentYear = object.enrollmentYear;
+  //     this.firstName = object.firstName;
+  //     this.lastName = object.lastName;
+  //   }
+  //   // this.interest = object.interest;
+  // }
+
   @IsString()
   @MaxLength(30)
   @IsNotEmpty()
-  readonly username?: string;
+  readonly username: string;
 
   @IsString()
   @MaxLength(30)
@@ -125,8 +140,8 @@ export class CreateUserPartialDto {
   readonly campus: string;
 
   @IsNotEmpty()
-  readonly enrollmentYear: Date;
+  readonly enrollmentYear: string;
 
-  @IsArray()
-  readonly interest: string[];
+  // @IsArray()
+  // readonly interest: string[];
 }

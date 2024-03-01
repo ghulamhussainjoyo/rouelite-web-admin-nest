@@ -13,23 +13,26 @@ import { CreateUserDto } from './create-user.dto';
 export class CreateEventDto {
   @IsString()
   @IsNotEmpty()
-  readonly thumbnail: string;
-
-  @IsString()
-  @IsNotEmpty()
   readonly title: string;
 
   @IsString()
   @IsNotEmpty()
   readonly description: string;
 
-  @IsDate()
+  @IsString()
   @IsNotEmpty()
-  readonly eventDate: Date;
+  readonly interest: string;
 
   @IsString()
   @IsNotEmpty()
-  readonly eventTime: string;
+  readonly eventDate: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly startTime: string;
+  @IsString()
+  @IsNotEmpty()
+  readonly endTime: string;
 
   @IsString()
   @IsNotEmpty()
@@ -41,19 +44,19 @@ export class CreateEventDto {
 
   @IsEnum(subscription)
   @IsNotEmpty()
-  readonly subscription: subscription;
+  readonly subscription?: subscription;
 
-  @Type(() => CreateUserDto)
-  @ValidateNested({ each: true })
-  @IsArray()
-  readonly host: CreateUserDto;
+  // @Type(() => CreateUserDto)
+  // @ValidateNested({ each: true })
+  // @IsArray()
+  // readonly host: CreateUserDto;
 
   @IsEnum(visibility)
   @IsNotEmpty()
   readonly visibility: visibility;
 
-  @Type(() => CreateUserDto)
-  @ValidateNested({ each: true })
-  @IsArray()
-  readonly attendance: CreateUserDto[];
+  // @Type(() => CreateUserDto)
+  // @ValidateNested({ each: true })
+  // @IsArray()
+  // readonly attendance: CreateUserDto[];
 }

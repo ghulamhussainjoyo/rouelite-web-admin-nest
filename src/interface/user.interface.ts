@@ -21,6 +21,10 @@ interface ISocial {
   readonly connected: boolean;
 }
 
+interface IImage {
+  public_id: string;
+  url: string;
+}
 export interface IUser extends Document {
   readonly username?: string;
   readonly firstName: string;
@@ -28,12 +32,12 @@ export interface IUser extends Document {
   readonly email: string;
   readonly password: string;
   readonly campus: string;
-  readonly enrollmentYear: Date;
+  readonly enrollmentYear: string;
   readonly interest: string[];
   readonly friends: IFriend[];
   readonly requests: IRequest[];
   readonly blocked: IBlocked[];
-  readonly image?: string | null;
+  readonly image?: IImage;
   readonly hosted: IUser['_id'][];
   readonly attended: IUser['_id'][];
   readonly socials: ISocial[];

@@ -53,8 +53,8 @@ export class User {
   @Prop({ type: String, required: true })
   campus: string;
 
-  @Prop({ type: Date, required: true })
-  enrollmentYear: Date;
+  @Prop({ type: String, required: true })
+  enrollmentYear: string;
 
   @Prop({
     type: [String], // Corrected type definition for array of strings
@@ -102,31 +102,44 @@ export class User {
   })
   blocked: { date: Date; friend: mongoose.Schema.Types.ObjectId }[];
 
-  @Prop([
-    {
+  @Prop({
+    type: raw({
       public_id: { type: String },
       url: { type: String },
-    },
-  ])
-  image: string;
+    }),
+  })
+  image: { public_id: string; url: string };
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }] })
   hosted: Event[];
-
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }] })
-  attended: Event[];
-
+  // @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Event' }] })
+  // attended: Event[];
   @Prop({
-    type: [
-      raw({
-        name: { type: String },
-        link: { type: String },
-        connected: { type: Boolean },
-      }),
-    ],
-    default: [],
+    type: raw({
+      instagram: {
+        link: { type: String, default: null },
+        connected: { type: Boolean, default: false },
+      },
+      facebook: {
+        link: { type: String, default: null },
+        connected: { type: Boolean, default: false },
+      },
+      tikTok: {
+        link: { type: String, default: null },
+        connected: { type: Boolean, default: false },
+      },
+      snapchat: {
+        link: { type: String, default: null },
+        connected: { type: Boolean, default: false },
+      },
+    }),
   })
-  socials: { name: string; link: string; connected: boolean }[];
+  socials: {
+    instagram: { link: string; connected: boolean };
+    facebook: { link: string; connected: boolean };
+    tikTok: { link: string; connected: boolean };
+    snapchat: { link: string; connected: boolean };
+  };
 
   @Prop({
     type: String,
@@ -139,6 +152,17 @@ export class User {
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Notification' }],
   })
   notification: Notification[];
+
+  @Prop({
+    type: Date,
+  })
+  timestamp: Date;
+
+  @Prop({ type: Boolean, default: false })
+  isEmailVerified: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  isProfileCompleted: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
