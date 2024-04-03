@@ -1,14 +1,5 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsEnum,
-  IsDate,
-  IsArray,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { subscription, visibility } from 'src/types/event.enum';
-import { CreateUserDto } from './create-user.dto';
+import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
+import { visibility } from 'src/types/event.enum';
 
 export class CreateEventDto {
   @IsString()
@@ -42,9 +33,9 @@ export class CreateEventDto {
   @IsNotEmpty()
   readonly club: string;
 
-  @IsEnum(subscription)
-  @IsNotEmpty()
-  readonly subscription?: subscription;
+  // @IsEnum(subscription)
+  // @IsNotEmpty()
+  // readonly subscription?: subscription;
 
   // @Type(() => CreateUserDto)
   // @ValidateNested({ each: true })
@@ -54,6 +45,9 @@ export class CreateEventDto {
   @IsEnum(visibility)
   @IsNotEmpty()
   readonly visibility: visibility;
+
+  @IsString()
+  readonly password?: string;
 
   // @Type(() => CreateUserDto)
   // @ValidateNested({ each: true })

@@ -41,8 +41,11 @@ export class Event {
 
   @Prop({ type: String })
   club: string;
-  //optional
 
+  @Prop({ type: String, required: true })
+  password?: string;
+
+  //optional
   @Prop({
     type: String,
     required: true,

@@ -26,6 +26,7 @@ interface IImage {
   url: string;
 }
 export interface IUser extends Document {
+  readonly _id: string;
   readonly username?: string;
   readonly firstName: string;
   readonly lastName: string;

@@ -16,7 +16,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
-import { User, UserDocument } from 'src/schema/user.schema';
+import { UserDocument } from 'src/schema/user.schema';
 import { EventService } from './event.service';
 import { CreateEventDto } from 'src/dto/create-event.dto';
 import { UpdateEventDto } from 'src/dto/update-event.dto';
@@ -62,12 +62,15 @@ export class EventController {
     });
   }
 
+  // created
   @Get('current-user-events')
   async getSignedEvents(@Req() req: Request, @Res() res: Response) {
     const user: UserDocument = req.user as UserDocument;
     const events = await this.eventService.getEventsOfSignedUser(user.id);
     return res.status(HttpStatus.OK).json({ success: true, events: events });
   }
+
+  //TODO: joined event
 
   @Get()
   async getEvents(

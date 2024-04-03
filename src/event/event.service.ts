@@ -13,6 +13,9 @@ import { Event, EventDocument } from 'src/schema/event.schema';
 import { subscription } from 'src/types/event.enum';
 import { visibility } from 'src/types/user.enum';
 import { UpdateEventDto } from 'src/dto/update-event.dto';
+import * as bcrypt from 'bcrypt';
+import { IUser } from 'src/interface/user.interface';
+const saltOrRounds = 10;
 
 @Injectable()
 export class EventService {
@@ -47,6 +50,14 @@ export class EventService {
       location: createEventDto.location,
       thumbnail: { public_id: result.public_id, url: result.secure_url },
     };
+
+    if (createEventDto.password) {
+      const hashPassword = await bcrypt.hash(
+        createEventDto.password,
+        saltOrRounds,
+      );
+      data['password'] = hashPassword;
+    }
 
     const newEvent = await this.eventModel.create(data);
     await newEvent.save();

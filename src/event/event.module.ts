@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Event, EventSchema } from 'src/schema/event.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CloudinaryModule } from 'src/cloudinary/cloudinary.module';
+import { UserService } from 'src/user/user.service';
 
 @Module({
   imports: [

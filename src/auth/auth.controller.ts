@@ -39,8 +39,8 @@ export class AuthController {
 
     if (sent) {
       return res.status(HttpStatus.CREATED).json({
-        message: 'User has been created successfully',
-        user: createdUser,
+        success: true,
+        message: `We have sent you email on this email ${createUserDto.email}, please verify email`,
       });
     } else {
       return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({

@@ -21,32 +21,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // @Post()
-  // @UseInterceptors(FileInterceptor('file'))
-  // async createUser(
-  //   @UploadedFile() file: Express.Multer.File,
-  //   @Res() res: Response,
-  //   @Body() createUserDto: CreateUserPartialDto,
-  // ) {
-  //   const result = await this.userService.createUser(file, CreateUserDto);
-  //   return res.status(HttpStatus.CREATED).json({
-  //     message: 'User has been created successfully',
-  //     user: result,
-  //   });
-  // }
-
-  // @Post()
-  // async createUser(
-  //   @Res() res: Response,
-  //   @Body() createUserDto: CreateUserPartialDto,
-  // ) {
-  //   const result = await this.userService.createUser(createUserDto);
-  //   return res.status(HttpStatus.CREATED).json({
-  //     message: 'User has been created successfully',
-  //     user: result,
-  //   });
-  // }
-
   // TODO: set user name
   @Put('set-username/:username')
   async setUserName(

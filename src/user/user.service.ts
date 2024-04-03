@@ -88,7 +88,7 @@ export class UserService {
     return [newUser];
   }
 
-  async findUsers(userId: string): Promise<UserDocument[]> {
+  async findById(userId: string): Promise<UserDocument[]> {
     const currentUser = await this.userModel.findById(userId);
     if (!currentUser) {
       throw new NotFoundException(`Student not found with this ${userId}`);
