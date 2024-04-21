@@ -9,12 +9,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import { Model } from 'mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { ApproveRequestDto } from 'src/dto/approve-request.dto';
 import { CreateClubDto, UpdateClubDto } from 'src/dto/create-club.dto';
 // import { InValidIdException } from 'src/exception/InvalidIdException';
-import { InValidIdException } from '../exception/InValidIdException';
+// import { InValidIdException } from '../exception/InValidIdException';
 import { IClub } from 'src/interface/club.interface';
 import { IUser } from 'src/interface/user.interface';
 import { Club, ClubDocument } from 'src/schema/club.schema';
@@ -314,7 +314,8 @@ export class ClubService {
     user: IUser,
   ): Promise<boolean> {
     if (!isValidObjectId(clubId) || !isValidObjectId(userId)) {
-      throw new InValidIdException();
+      // throw new InValidIdException();
+      throw new HttpException('INVALID CLUB ID', HttpStatus.BAD_REQUEST);
     }
     const [clubDB] = await Promise.all([
       this.clubModel.findOne({
@@ -347,7 +348,7 @@ export class ClubService {
     user: IUser,
   ): Promise<boolean> {
     if (!isValidObjectId(clubId) || !isValidObjectId(userId)) {
-      throw new InValidIdException();
+      throw new HttpException('INVALID CLUB ID', HttpStatus.BAD_REQUEST);
     }
     const [clubDB] = await Promise.all([
       this.clubModel.findOne({
