@@ -31,7 +31,11 @@ export class CreateEventDto {
 
   @IsString()
   @IsNotEmpty()
-  readonly club: string;
+  readonly clubId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly clubName: string;
 
   // @IsEnum(subscription)
   // @IsNotEmpty()
@@ -46,7 +50,6 @@ export class CreateEventDto {
   @IsNotEmpty()
   readonly visibility: visibility;
 
-  @IsString()
   readonly password?: string;
 
   // @Type(() => CreateUserDto)

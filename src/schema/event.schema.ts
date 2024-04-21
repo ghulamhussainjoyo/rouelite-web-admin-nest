@@ -2,10 +2,18 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { subscription, visibility } from 'src/types/event.enum';
 import { User } from './user.schema';
+import { Club } from './club.schema';
 
 export type EventDocument = HydratedDocument<Event>;
 
-@Schema()
+@Schema({
+  timestamps: true,
+  toJSON: {
+    transform(doc, ret, options) {
+      delete ret['password'];
+    },
+  },
+})
 export class Event {
   @Prop([
     {
@@ -39,11 +47,35 @@ export class Event {
   @Prop({ type: String, required: true })
   location: string;
 
-  @Prop({ type: String })
-  club: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Club' })
+  clubId: Club;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
+  clubName: string;
+
+  @Prop({ type: String })
   password?: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  host: User;
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+  attendance?: User[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
+  requests?: User[];
+
+  @Prop({
+    type: [
+      {
+        date: {
+          type: Date,
+        },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      },
+    ],
+  })
+  checkedIn?: { date: Date; user: mongoose.Schema.Types.ObjectId }[];
 
   //optional
   @Prop({
@@ -54,9 +86,6 @@ export class Event {
   })
   subscription?: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  host: User;
-
   @Prop({
     type: String,
     required: true,
@@ -65,8 +94,16 @@ export class Event {
   })
   visibility: string;
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  attendance?: User[];
+  @Prop({
+    type: [
+      {
+        rating: { type: Number },
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Reference the User schema
+      },
+    ],
+    default: [],
+  })
+  rating?: { rating: string; user: mongoose.Schema.Types.ObjectId }[];
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);

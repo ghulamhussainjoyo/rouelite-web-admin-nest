@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
   HttpStatus,
   InternalServerErrorException,
   Param,
@@ -17,12 +16,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { query, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { ClubIdUserIdDto, CreateClubDto } from 'src/dto/create-club.dto';
 import { IUser } from 'src/interface/user.interface';
 import { ClubService } from './club.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApproveRequestDto } from 'src/dto/approve-request.dto';
+import { ExpRequest } from 'src/auth/middleware/auth.middleware';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('club')
@@ -30,32 +30,21 @@ export class ClubController {
   constructor(private clubService: ClubService) {}
 
   @Get()
-  async getCreatedClubs(@Req() req: Request, @Res() res: Response) {
+  async getCreatedByUser(@Req() req: Request, @Res() res: Response) {
     const user: IUser = req.user as IUser;
-    const clubs = await this.clubService.getCreatedClubs(user);
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      clubs,
-    });
-  }
-  @Get('joined')
-  async getJoined(@Req() req: Request, @Res() res: Response) {
-    const user: IUser = req.user as IUser;
-    const clubs = await this.clubService.getJoinedClubs(user);
+    const clubs = await this.clubService.getCreatedByUser(user);
     return res.status(HttpStatus.OK).json({
       success: true,
       clubs,
     });
   }
 
-  @Get(':id')
-  async getClubById(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Res() res: Response,
-  ) {
+  // get all clubs except
+
+  @Get('joined')
+  async getJoined(@Req() req: Request, @Res() res: Response) {
     const user: IUser = req.user as IUser;
-    const clubs = await this.clubService.getClubById(id, user);
+    const clubs = await this.clubService.getJoinedClubs(user);
     return res.status(HttpStatus.OK).json({
       success: true,
       clubs,
@@ -105,6 +94,7 @@ export class ClubController {
       message: 'CLUB CREATED SUCCESSFULLY',
     });
   }
+
   @Patch('update/:clubId')
   @UseInterceptors(FileInterceptor('file'))
   async updateClub(
@@ -150,6 +140,8 @@ export class ClubController {
       message: 'CLUB JOINED SUCCESSFULLY',
     });
   }
+
+  // TODO: request reject of joining club
 
   // query userId:string and clubId:String
   @Get('assign/designation/admin')
@@ -224,5 +216,31 @@ export class ClubController {
     } else {
       throw new InternalServerErrorException();
     }
+  }
+
+  // TODO: get clubs for logged In user except joined clubs and created clubs
+  @Get('user')
+  async getClubsForUser(@Req() req: ExpRequest, @Res() res: Response) {
+    const user = req.user;
+
+    const clubs = await this.clubService.getClubsForUser(user);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      clubs,
+    });
+  }
+
+  @Get(':id')
+  async getClubById(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const user: IUser = req.user as IUser;
+    const clubs = await this.clubService.getClubById(id, user);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      clubs,
+    });
   }
 }

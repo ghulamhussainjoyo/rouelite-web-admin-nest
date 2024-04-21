@@ -43,8 +43,9 @@ export class UserController {
     @Res() res: Response,
     @Req() req: any,
   ) {
+    console.log('🚀 ~ UserController ~ file:', file);
     const id = req.user.id;
-    const user = await this.userService.setUserProfile(id, file);
+    const user = await this.userService.setUserProfileImage(id, file);
     return res.status(HttpStatus.OK).json({ success: true, user });
   }
   // TODO: set user interest
@@ -60,6 +61,32 @@ export class UserController {
       user,
       success: true,
       message: `USER.INTEREST_UPDATED_SUCCESSFULLY`,
+    });
+  }
+
+  @Get('friends')
+  async totalFriends(@Req() req: any, @Res() res: Response) {
+    const id = req.user.id;
+    const friends: number = await this.userService.getUserFriends(id);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      friends: friends,
+    });
+  }
+  @Get(':id')
+  async findById(@Param('id') id: string, @Res() res: Response) {
+    const user = await this.userService.findById(id);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      user,
+    });
+  }
+  @Get('partial/:id')
+  async findPartialById(@Param('id') id: string, @Res() res: Response) {
+    const user = await this.userService.findPartialById(id);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      user,
     });
   }
 }

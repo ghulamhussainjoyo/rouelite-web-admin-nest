@@ -1,11 +1,17 @@
-import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Mongoose } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
 import { User } from './user.schema';
-import { designation } from 'src/types/club.enum';
 
 export type ClubDocument = HydratedDocument<Club>;
 
-@Schema()
+@Schema({
+  timestamps: true,
+  toJSON: {
+    transform(doc, ret, options) {
+      delete ret['password'];
+    },
+  },
+})
 export class Club {
   @Prop([
     {
@@ -29,6 +35,7 @@ export class Club {
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
   owner: User;
+
   @Prop({
     type: [
       {

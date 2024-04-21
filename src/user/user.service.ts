@@ -1,11 +1,12 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { CreateUserPartialDto } from 'src/dto/create-user.dto';
 import { UpdateUserDto } from 'src/dto/update-user.dto';
@@ -96,6 +97,16 @@ export class UserService {
     return [currentUser];
   }
 
+  async findPartialById(userId: string): Promise<UserDocument[]> {
+    const currentUser = await this.userModel
+      .findById(userId)
+      .select(['firstName', 'lastName', 'email', 'image', 'campus']);
+    if (!currentUser) {
+      throw new NotFoundException(`Student not found with this ${userId}`);
+    }
+    return [currentUser];
+  }
+
   async getUsers(): Promise<UserDocument[]> {
     const users = await this.userModel.find().exec();
     if (!users || users.length === 0) {
@@ -176,30 +187,35 @@ export class UserService {
     return user;
   }
 
-  async setUserProfile(
+  async setUserProfileImage(
     id: string,
     file: Express.Multer.File,
   ): Promise<UserDocument> {
-    if (!file) {
-      throw new NotFoundException();
+    try {
+      if (!file) {
+        throw new NotFoundException();
+      }
+      const user = await this.userModel.findById(id);
+      const result = await this.cloudinaryService.uploadImage(file);
+      if (!result) {
+        throw new InternalServerErrorException();
+      }
+      user.image = { public_id: result.public_id, url: result.secure_url };
+      await user.save();
+      return {
+        username: user.username,
+        campus: user.username,
+        email: user.email,
+        enrollmentYear: user.enrollmentYear,
+        firstName: user.firstName,
+        image: user?.image,
+        lastName: user.lastName,
+        isProfileCompleted: user.isProfileCompleted,
+      } as any;
+    } catch (error) {
+      console.log('🚀 ~ UserService ~ error:', error);
+      // throw new Error(error);
     }
-    const user = await this.userModel.findById(id);
-    const result = await this.cloudinaryService.uploadImage(file);
-    if (!result) {
-      throw new InternalServerErrorException();
-    }
-    user.image = { public_id: result.public_id, url: result.secure_url };
-    await user.save();
-    return {
-      username: user.username,
-      campus: user.username,
-      email: user.email,
-      enrollmentYear: user.enrollmentYear,
-      firstName: user.firstName,
-      image: user?.image,
-      lastName: user.lastName,
-      isProfileCompleted: user.isProfileCompleted,
-    } as any;
   }
 
   async setUserInterest(id: string, interest: string[]): Promise<UserDocument> {
@@ -220,5 +236,20 @@ export class UserService {
       lastName: user.lastName,
       isProfileCompleted: user.isProfileCompleted,
     } as any;
+  }
+
+  async getUserFriends(id: string): Promise<number> {
+    if (!isValidObjectId(id)) {
+      throw new BadRequestException();
+    }
+
+    const user = await this.userModel.findById(id);
+    if (!user) {
+      throw new NotFoundException(`USER NOT FOUND WITH THIS ID ${id}`);
+    }
+
+    const friends = user.friends.length;
+    console.log('🚀 ~ UserService ~ getUserFriends ~ friends:', friends);
+    return friends;
   }
 }

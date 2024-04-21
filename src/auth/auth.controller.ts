@@ -15,8 +15,6 @@ import { UserService } from 'src/user/user.service';
 import { CreateUserPartialDto } from 'src/dto/create-user.dto';
 import { Response } from 'express';
 import { Login } from './interface/login.interface';
-import { LocalAuthGuard } from './passport/local-auth.gaurd';
-import { JwtAuthGuard } from './passport/jwt-auth.gaurd';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')

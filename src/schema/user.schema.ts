@@ -65,12 +65,12 @@ export class User {
 
   @Prop({
     type: [
-      raw({
+      {
         date: { type: Date },
         friend: {
           type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         },
-      }),
+      },
     ],
     default: [],
   })

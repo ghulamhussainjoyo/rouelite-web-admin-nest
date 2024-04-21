@@ -139,6 +139,7 @@ export class AuthService {
 
   async validateLogin(email: string, password: string) {
     const user = await this.validateUser(email, password);
+
     if (!user) {
       throw new HttpException('LOGIN.ERROR', HttpStatus.UNAUTHORIZED);
     }
@@ -154,6 +155,7 @@ export class AuthService {
     }
 
     const newUser = {
+      id: (user as any)._id.toString(),
       username: user.username,
       campus: user.username,
       email: user.email,

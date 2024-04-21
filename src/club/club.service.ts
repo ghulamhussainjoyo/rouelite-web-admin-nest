@@ -1,13 +1,15 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { ApproveRequestDto } from 'src/dto/approve-request.dto';
 import { CreateClubDto, UpdateClubDto } from 'src/dto/create-club.dto';
@@ -34,7 +36,7 @@ export class ClubService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async getCreatedClubs(user: IUser): Promise<ClubDocument[]> {
+  async getCreatedByUser(user: IUser): Promise<ClubDocument[]> {
     if (!user) {
       throw new NotFoundException();
     }
@@ -52,7 +54,13 @@ export class ClubService {
     return clubs;
   }
 
-  async getClubById(clubId: string, user: IUser): Promise<IClub> {
+  async getClubById(
+    clubId: string,
+    user: IUser,
+  ): Promise<IClub & { isOwner: boolean; isAdmin: boolean }> {
+    if (!isValidObjectId(clubId)) {
+      throw new HttpException('INVALID CLUB ID', HttpStatus.BAD_REQUEST);
+    }
     if (clubId.length <= 0) {
       throw new Error('CLUB ID NOT FOUND');
     }
@@ -62,18 +70,28 @@ export class ClubService {
       throw new NotFoundException();
     }
 
+    if (!user) {
+      throw new NotFoundException('USER NOT FOUND');
+    }
+
+    const member = club.members.find((member) => member.user === user.id);
+
     let status = memberStatus[memberStatus.UNCONNECTED];
 
-    if (user) {
-      const member = club.members.find((member) => member.user === user.id);
-
-      if (member) {
-        status = memberStatus[memberStatus.JOINED];
-      } else if (club.requests.includes(user.id)) {
-        status = memberStatus[memberStatus.REQUESTED];
-      }
+    if (member) {
+      status = memberStatus[memberStatus.JOINED];
+    } else if (club.requests.includes(user.id)) {
+      status = memberStatus[memberStatus.REQUESTED];
     }
-    return { ...club.toJSON(), status };
+
+    const isOwner = club.owner.valueOf() === user._id.valueOf();
+    const isAdmin: boolean = club.members.some(
+      (us) =>
+        user._id.valueOf() === us.user.valueOf() &&
+        us.designation === designation[designation.admin],
+    );
+
+    return { ...club.toJSON(), status, isOwner, isAdmin };
   }
 
   async getClubMembers(clubId: string) {
@@ -131,36 +149,48 @@ export class ClubService {
     file: Express.Multer.File,
     body: CreateClubDto,
   ): Promise<ClubDocument> {
-    if (!file) {
-      throw new NotFoundException('File Not Found');
+    try {
+      if (!file) {
+        throw new NotFoundException('File Not Found');
+      }
+
+      const cloudinaryResult = await this.cloudinaryService.uploadImage(file);
+
+      if (!cloudinaryResult) {
+        throw new InternalServerErrorException();
+      }
+
+      const data: Club = {
+        name: body.name,
+        description: body.description,
+        interest: body.interest,
+        thumbnail: {
+          public_id: cloudinaryResult.public_id,
+          url: cloudinaryResult.secure_url,
+        },
+        owner: user.id,
+        members: [
+          {
+            designation: designation.owner,
+            user: await user.id,
+          },
+        ],
+      };
+      const newClub = await this.clubModel.create(data);
+      // newClub.members.push({ designation: designation.owner, user: user.id });
+      await newClub.save();
+      if (!newClub) {
+        throw new InternalServerErrorException();
+      }
+
+      return newClub;
+    } catch (error) {
+      console.log('🚀 ~ ClubService ~ error:', error);
+      throw new InternalServerErrorException(error);
     }
-
-    const cloudinaryResult = await this.cloudinaryService.uploadImage(file);
-
-    if (!cloudinaryResult) {
-      throw new InternalServerErrorException();
-    }
-
-    const data: Club = {
-      name: body.name,
-      description: body.description,
-      interest: body.interest,
-      thumbnail: {
-        public_id: cloudinaryResult.public_id,
-        url: cloudinaryResult.secure_url,
-      },
-      owner: user.id,
-    };
-    const newClub = await this.clubModel.create(data);
-    newClub.members.push({ designation: designation.owner, user: user.id });
-    await newClub.save();
-    if (!newClub) {
-      throw new InternalServerErrorException();
-    }
-
-    return newClub;
   }
 
+  // TODO:test
   async updateClub(
     clubId: string,
     file: Express.Multer.File,
@@ -172,7 +202,12 @@ export class ClubService {
     }
 
     // Find the club
-    let club = await this.clubModel.findById(clubId);
+    const club = await this.clubModel.findByIdAndUpdate(
+      clubId,
+      { ...body },
+      { new: true },
+    );
+
     if (!club) {
       throw new NotFoundException();
     }
@@ -183,17 +218,16 @@ export class ClubService {
       if (!cloudinaryResult) {
         throw new InternalServerErrorException();
       }
-      club.thumbnail.public_id = cloudinaryResult.public_id;
-      club.thumbnail.url = cloudinaryResult.secure_url;
+      // club.thumbnail.public_id = cloudinaryResult.public_id;
+      // club.thumbnail.url = cloudinaryResult.secure_url;
+
+      club.thumbnail[0] = {
+        public_id: cloudinaryResult.public_id,
+        url: cloudinaryResult.secure_url,
+      };
     }
 
-    // Update the club with the new data from the body
-    club = await this.clubModel.findByIdAndUpdate(
-      clubId,
-      { ...body },
-      { new: true },
-    );
-
+    await club.save();
     return club;
   }
 
@@ -359,5 +393,46 @@ export class ClubService {
     await clubFromDB.save();
 
     return true;
+  }
+
+  // ->
+  async getClubsForUser(user: IUser): Promise<ClubDocument[]> {
+    if (!user) {
+      throw new NotFoundException();
+    }
+    const selectArray = ['thumbnail', 'name', '_id', ''];
+    let clubs = await this.clubModel
+      .find({
+        $and: [
+          { interest: { $in: user.interest } }, // User's interests
+          { owner: { $ne: user._id } },
+          {
+            $nor: [
+              { members: { $in: [user._id] } },
+              { requests: { $in: [user._id] } },
+            ],
+          },
+        ],
+      })
+      .select(selectArray)
+      .exec();
+
+    if (!clubs || !clubs.length) {
+      clubs = await this.clubModel
+        .find({
+          $and: [
+            { owner: { $ne: user._id } },
+            {
+              $nor: [
+                { members: { $in: [user._id] } },
+                { requests: { $in: [user._id] } },
+              ],
+            },
+          ],
+        })
+        .select(selectArray)
+        .exec();
+    }
+    return clubs;
   }
 }
