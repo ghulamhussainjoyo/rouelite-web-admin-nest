@@ -24,6 +24,6 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors();
   app.use(passport.initialize());
-  await app.listen(configService.get('PORT') || 3000);
+  await app.listen(configService.get('PORT'));
 }
 bootstrap();
