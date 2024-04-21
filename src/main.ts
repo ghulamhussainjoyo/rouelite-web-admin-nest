@@ -7,12 +7,14 @@ import { AppModule } from './app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './Exception/HttpExceptionFilter';
 import * as passport from 'passport';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   // const app = await NestFactory.create<NestFastifyApplication>(
   //   AppModule,
   //   new FastifyAdapter(),
   // );
+  const configService = new ConfigService();
 
   const app = await NestFactory.create(AppModule);
   app.enableCors();
@@ -22,6 +24,6 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.enableCors();
   app.use(passport.initialize());
-  await app.listen(3000);
+  await app.listen(configService.get('PORT') || 3000);
 }
 bootstrap();
