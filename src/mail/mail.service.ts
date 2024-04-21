@@ -27,7 +27,8 @@ export class MailService {
       if (email && username) {
         const host = 'localhost'; // Update with your production URL
         const port = 3000;
-        const url = `http://${host}:${port}/auth/email/verify/${emailToken}`;
+        // const url = `http://${host}:${port}/auth/email/verify/${emailToken}`;
+        const url = `https://thunder-backend-production.up.railway.app/auth/email/verify/${emailToken}`;
 
         return await this.mailerService.sendMail({
           to: email,
