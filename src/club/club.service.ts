@@ -46,11 +46,19 @@ export class ClubService {
   }
 
   async getJoinedClubs(user: IUser): Promise<ClubDocument[]> {
+    console.log(user.id);
     if (!user) {
       throw new NotFoundException();
     }
     const clubs = await this.clubModel
-      .find({ 'members.user': user._id, 'members.designation': 'member' })
+      .find({
+        members: {
+          $elemMatch: {
+            user: user._id,
+            designation: { $in: ['member', 'admin'] }, // Use $in for multiple values
+          },
+        },
+      })
       .exec();
     return clubs;
   }
@@ -62,9 +70,7 @@ export class ClubService {
     if (!isValidObjectId(clubId)) {
       throw new HttpException('INVALID CLUB ID', HttpStatus.BAD_REQUEST);
     }
-    if (clubId.length <= 0) {
-      throw new Error('CLUB ID NOT FOUND');
-    }
+
     const club = await this.clubModel.findOne({ _id: clubId }).exec();
 
     if (!club) {
@@ -75,7 +81,16 @@ export class ClubService {
       throw new NotFoundException('USER NOT FOUND');
     }
 
-    const member = club.members.find((member) => member.user === user.id);
+    const member = club.members
+      .filter((item) => item.designation === 'member')
+      .some((member) => {
+        console.log('🚀 ~ ClubService ~ member:', member, user._id);
+        console.log(
+          '🚀 ~ ClubService ~ member:',
+          member.user.toString() === user._id.toString(),
+        );
+        return member.user.toString() === user._id.toString();
+      });
 
     let status = memberStatus[memberStatus.UNCONNECTED];
 
@@ -119,7 +134,7 @@ export class ClubService {
   async getApproveRequests(clubId: string, user: IUser) {
     try {
       if (!clubId) {
-        throw new Error('CLOUD ID NOT FOUND');
+        throw new HttpException('CLOUD ID NOT FOUND', HttpStatus.BAD_REQUEST);
       }
       const requests = await this.clubModel
         .findOne({ _id: clubId, owner: user._id })
@@ -128,13 +143,15 @@ export class ClubService {
           firstName: true,
           lastName: true,
           username: true,
+          image: true,
+          campus: true,
         })
         .exec();
 
       if (!requests) {
         throw new Error('CLUB NOT FOUND');
       }
-      return requests;
+      return requests.requests;
     } catch (error) {
       if (error.name === 'CastError') {
         throw new NotFoundException('Invalid club ID'); // Customize message
@@ -261,6 +278,7 @@ export class ClubService {
     approveUserDro: ApproveRequestDto,
     user: IUser,
   ) {
+    console.log('🚀 ~ ClubService ~ clubId:', clubId);
     if (!isValidObjectId(clubId)) {
       throw new BadRequestException('Invalid club ID format');
     }
@@ -294,6 +312,58 @@ export class ClubService {
         designation: designation[designation.member],
         user: await this.userModel.findById(approveUserDro.userId),
       });
+      request.requests.splice(requestIndex, 1);
+      request.save();
+
+      return request; // Process the approved request
+    } catch (error) {
+      if (error.name === 'CastError') {
+        throw new NotFoundException('Invalid club ID'); // Customize message
+      } else {
+        // Handle other errors (e.g., database errors)
+        throw new InternalServerErrorException('An error occurred');
+      }
+    }
+  }
+
+  async rejectRequest(
+    clubId: string,
+    approveUserDro: ApproveRequestDto,
+    user: IUser,
+  ) {
+    if (!isValidObjectId(clubId)) {
+      throw new BadRequestException('Invalid club ID format');
+    }
+
+    try {
+      const request = await this.clubModel
+        .findOne({
+          _id: clubId,
+          owner: user._id,
+        })
+        .populate('requests', {
+          firstName: true,
+          lastName: true,
+          username: true,
+        })
+        .exec();
+
+      if (!request) {
+        throw new NotFoundException('Club not found or request not found');
+      }
+
+      const requestIndex = request.requests.findIndex(
+        (item) => (item as any).id === approveUserDro.userId,
+      );
+
+      if (requestIndex <= -1) {
+        throw new NotFoundException();
+      }
+
+      // request.members.push({
+      //   designation: designation[designation.member],
+      //   user: await this.userModel.findById(approveUserDro.userId),
+      // });
       request.requests.splice(requestIndex, 1);
       request.save();
 
@@ -410,7 +480,7 @@ export class ClubService {
           { owner: { $ne: user._id } },
           {
             $nor: [
-              { members: { $in: [user._id] } },
+              { 'members.user': { $in: [user._id] } },
               { requests: { $in: [user._id] } },
             ],
           },
@@ -426,7 +496,7 @@ export class ClubService {
             { owner: { $ne: user._id } },
             {
               $nor: [
-                { members: { $in: [user._id] } },
+                { 'members.user': { $in: [user._id] } },
                 { requests: { $in: [user._id] } },
               ],
             },
@@ -436,5 +506,13 @@ export class ClubService {
         .exec();
     }
     return clubs;
+  }
+
+  async deleteClub(userId: string, clubId: string) {
+    const club = await this.clubModel.findByIdAndDelete(clubId);
+    if (!club) {
+      throw new NotFoundException();
+    }
+    return club;
   }
 }

@@ -247,9 +247,7 @@ export class UserService {
     if (!user) {
       throw new NotFoundException(`USER NOT FOUND WITH THIS ID ${id}`);
     }
-
     const friends = user.friends.length;
-    console.log('🚀 ~ UserService ~ getUserFriends ~ friends:', friends);
     return friends;
   }
 }

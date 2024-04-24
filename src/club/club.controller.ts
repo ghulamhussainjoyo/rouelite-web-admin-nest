@@ -47,6 +47,7 @@ export class ClubController {
     const clubs = await this.clubService.getJoinedClubs(user);
     return res.status(HttpStatus.OK).json({
       success: true,
+      user: user.id,
       clubs,
     });
   }
@@ -75,7 +76,7 @@ export class ClubController {
     const requests = await this.clubService.getApproveRequests(id, user);
     return res.status(HttpStatus.OK).json({
       success: true,
-      users: requests,
+      requests,
     });
   }
 
@@ -142,6 +143,21 @@ export class ClubController {
   }
 
   // TODO: request reject of joining club
+
+  @Patch('request/reject/:id')
+  async rejectJoinClub(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() approveRequestDto: ApproveRequestDto,
+    @Res() res: Response,
+  ) {
+    const user: IUser = req.user as IUser;
+    await this.clubService.rejectRequest(id, approveRequestDto, user);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: 'CLUB JOINED SUCCESSFULLY',
+    });
+  }
 
   // query userId:string and clubId:String
   @Get('assign/designation/admin')
@@ -230,6 +246,23 @@ export class ClubController {
     });
   }
 
+  @Delete('delete/:id')
+  async deleteClub(
+    @Param('id') clubId: string,
+    @Res() res: Response,
+    @Req() req: ExpRequest,
+  ) {
+    const isDeleted = await this.clubService.deleteClub(req.user.id, clubId);
+
+    if (!isDeleted) {
+      throw new InternalServerErrorException();
+    }
+
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: 'CLUB DELETED SUCCESSFULLY',
+    });
+  }
   @Get(':id')
   async getClubById(
     @Req() req: Request,
