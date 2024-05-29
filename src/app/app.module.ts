@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserModule } from 'src/user/user.module';
+
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { OtpModule } from 'src/otp/otp.module';
-import { AuthModule } from 'src/auth/auth.module';
-import { EventModule } from 'src/event/event.module';
-import { ClubModule } from 'src/club/club.module';
+
+import { BookSurveyModule } from 'src/website/web-survey/survey.module';
+import { WebLeadModule } from 'src/website/web-lead/web-lead.module';
+import { WebQuoteModule } from 'src/website/web-quotes/web-quotes.module';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { ClubModule } from 'src/club/club.module';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get('MONGO_URL'),
-        dbName: 'thunder',
+        dbName: 'rouelite-website',
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }),
@@ -34,11 +34,9 @@ import { ClubModule } from 'src/club/club.module';
       rootPath: join(__dirname, '..', 'client'),
     }),
 
-    AuthModule,
-    OtpModule,
-    UserModule,
-    EventModule,
-    ClubModule,
+    WebLeadModule,
+    BookSurveyModule,
+    WebQuoteModule,
   ],
   controllers: [AppController],
   providers: [AppService],

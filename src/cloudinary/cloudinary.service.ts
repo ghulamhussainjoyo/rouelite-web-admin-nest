@@ -1,9 +1,14 @@
 import { BadRequestException, Injectable, UploadedFile } from '@nestjs/common';
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from 'cloudinary';
 import toStream = require('buffer-to-stream');
+import pLimit from 'p-limit';
+
+const pLimitBound = pLimit(10);
 
 @Injectable()
 export class CloudinaryService {
+  constructor() {}
+  // ------------------------------>
   async uploadImage(
     file: Express.Multer.File,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
@@ -25,5 +30,19 @@ export class CloudinaryService {
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     const result = await this.uploadImage(file);
     return result;
+  }
+
+  async uploadMultipleImageToCloudinary(
+    @UploadedFile() files: Express.Multer.File[],
+  ) {
+    const uploadImages = files.map((image) => {
+      return pLimitBound(async () => {
+        const result = await this.uploadImage(image);
+        return result;
+      });
+    });
+
+    const uploads = await Promise.all(uploadImages);
+    return uploads;
   }
 }

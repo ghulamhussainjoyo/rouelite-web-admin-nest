@@ -1,7 +1,6 @@
 import { Document } from 'mongoose';
 import { IUser } from './user.interface';
 import { IEvent } from './event.interface';
-import { memberStatus } from 'src/types/club.enum';
 
 export interface IThumbnail {
   public_id: string;
@@ -21,8 +20,4 @@ export interface IClub extends Document {
   readonly members?: IMember[];
   readonly attendance?: IUser['_id'][];
   readonly events?: IEvent['_id'][];
-  readonly status:
-    | memberStatus.JOINED
-    | memberStatus.REQUESTED
-    | memberStatus.UNCONNECTED;
 }
